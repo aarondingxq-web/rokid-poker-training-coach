@@ -70,7 +70,7 @@ npm run preview
 3. 如果本项目位于仓库根目录，粘贴仓库地址，例如：
 
    ```text
-   https://github.com/<owner>/rokid-poker-training-coach
+   https://github.com/aarondingxq-web/rokid-poker-training-coach
    ```
 
 4. 如果位于仓库子目录，粘贴 `tree` 地址，例如：
