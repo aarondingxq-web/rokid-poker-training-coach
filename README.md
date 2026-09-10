@@ -56,6 +56,8 @@ npm run preview
 
 ## 导入 AIUI Studio
 
+商店提审素材位于 `assets/`，包括应用图标、三张真实 Ink 预览截图和一段 MP4 演示视频。该目录已加入 `.aixignore`，不会进入运行时 AIX 包。
+
 ### 本地文件夹
 
 1. 打开 [AIUI Studio Craft](https://aiui.rokid.com/)。

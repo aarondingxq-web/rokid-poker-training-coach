@@ -3,6 +3,7 @@ dist/
 tests/
 scripts/
 docs/
+assets/
 .git/
 .gitignore
 package-lock.json
