@@ -1,0 +1,20 @@
+{
+  "name": "rokid-poker-training-coach",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A native Rokid AIUI Texas Hold'em training and post-hand review agent.",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/validate.mjs",
+    "build": "npm test && npm run validate && mkdir -p dist && aix pack . -o dist/rokid-poker-training-coach.aix",
+    "inspect": "aix list dist/rokid-poker-training-coach.aix",
+    "preview": "aix preview . --dev"
+  },
+  "devDependencies": {
+    "@yodaos-pkg/aix-cli": "0.8.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
