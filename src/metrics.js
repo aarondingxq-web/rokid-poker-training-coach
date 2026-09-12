@@ -1,4 +1,11 @@
-import { remainingDeck, validateKnownCards } from './cards.js';
+import { remainingDeck } from './cards.js';
+import {
+  DEFAULT_MONTE_CARLO_SAMPLES,
+  DEFAULT_RANDOM_SEED,
+  MAX_MONTE_CARLO_SAMPLES,
+  OUTS_BOARD_COUNTS,
+} from './constants.js';
+import { assertCalculableHand } from './hand-state.js';
 import { compareHands, evaluateBestHand } from './poker.js';
 
 function createRandom(seed) {
@@ -21,15 +28,6 @@ function drawWithoutReplacement(deck, count, random) {
   return pool.slice(0, count);
 }
 
-function assertCalculable(heroCards, boardCards) {
-  if (heroCards.length !== 2) throw new RangeError('权益计算需要两张手牌');
-  if (![0, 3, 4, 5].includes(boardCards.length)) {
-    throw new RangeError('公共牌数量必须为 0、3、4 或 5 张');
-  }
-  const validation = validateKnownCards([...heroCards, ...boardCards]);
-  if (!validation.valid) throw new RangeError(validation.error);
-}
-
 export function calculatePotOdds(potSize, amountToCall) {
   if (potSize === undefined || amountToCall === undefined) return undefined;
   if (!Number.isFinite(potSize) || !Number.isFinite(amountToCall)) return undefined;
@@ -39,8 +37,8 @@ export function calculatePotOdds(potSize, amountToCall) {
 }
 
 export function countImmediateOuts(heroCards, boardCards) {
-  assertCalculable(heroCards, boardCards);
-  if (![3, 4].includes(boardCards.length)) {
+  assertCalculableHand(heroCards, boardCards);
+  if (!OUTS_BOARD_COUNTS.includes(boardCards.length)) {
     return {
       count: 0,
       cards: [],
@@ -64,11 +62,11 @@ export function countImmediateOuts(heroCards, boardCards) {
 export function estimateHeadsUpEquity(
   heroCards,
   boardCards,
-  { samples = 800, seed = 20260910 } = {},
+  { samples = DEFAULT_MONTE_CARLO_SAMPLES, seed = DEFAULT_RANDOM_SEED } = {},
 ) {
-  assertCalculable(heroCards, boardCards);
-  if (!Number.isInteger(samples) || samples < 1 || samples > 100000) {
-    throw new RangeError('模拟次数必须是 1 到 100000 的整数');
+  assertCalculableHand(heroCards, boardCards);
+  if (!Number.isInteger(samples) || samples < 1 || samples > MAX_MONTE_CARLO_SAMPLES) {
+    throw new RangeError(`模拟次数必须是 1 到 ${MAX_MONTE_CARLO_SAMPLES} 的整数`);
   }
 
   const known = [...heroCards, ...boardCards];

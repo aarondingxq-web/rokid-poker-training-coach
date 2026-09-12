@@ -20,6 +20,20 @@ test('starts with an empty history when storage is missing or malformed', () => 
   assert.deepEqual(createHistoryRepository(createStorage('broken')).list(), []);
 });
 
+test('filters malformed records loaded from storage', () => {
+  const repository = createHistoryRepository(createStorage([
+    { confirmed: true, validated: true, id: 'broken' },
+    {
+      id: 'valid',
+      confirmed: true,
+      validated: true,
+      createdAt: '2026-09-10T12:00:00.000Z',
+      state: { heroCards: ['As', 'Ad'], boardCards: [] },
+    },
+  ]));
+  assert.deepEqual(repository.list().map((record) => record.id), ['valid']);
+});
+
 test('saves only confirmed validated structured records', () => {
   const repository = createHistoryRepository(createStorage());
   assert.throws(() => repository.save({ confirmed: false, validated: true }), /确认/);

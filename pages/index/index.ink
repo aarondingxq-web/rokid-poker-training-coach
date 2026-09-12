@@ -10,6 +10,11 @@ import wx from 'wx';
 
 import { RANKS, SUITS, cardLabel } from '../../src/cards.js';
 import {
+  DEFAULT_MONTE_CARLO_SAMPLES,
+  LEGAL_BOARD_COUNTS,
+  OUTS_BOARD_COUNTS,
+} from '../../src/constants.js';
+import {
   CARD_SLOTS,
   createHandState,
   numericValue,
@@ -92,11 +97,11 @@ function calculatePresentation(state) {
   let equityLabel = '待补充';
   let sampleLabel = '需要两张手牌与合法公共牌';
 
-  if (heroCards.length === 2 && [0, 3, 4, 5].includes(boardCards.length)) {
+  if (heroCards.length === 2 && LEGAL_BOARD_COUNTS.includes(boardCards.length)) {
     if (heroCards.length + boardCards.length >= 5) {
       handLabel = evaluateBestHand([...heroCards, ...boardCards]).name;
     }
-    if ([3, 4].includes(boardCards.length)) {
+    if (OUTS_BOARD_COUNTS.includes(boardCards.length)) {
       outsLabel = String(countImmediateOuts(heroCards, boardCards).count);
     } else if (boardCards.length === 5) {
       outsLabel = '已到河牌';
@@ -104,7 +109,7 @@ function calculatePresentation(state) {
       outsLabel = '翻牌后计算';
     }
     const equity = estimateHeadsUpEquity(heroCards, boardCards, {
-      samples: 800,
+      samples: DEFAULT_MONTE_CARLO_SAMPLES,
       seed: seedFor(state),
     });
     equityLabel = `${percent(equity.low)}–${percent(equity.high)}`;
@@ -130,26 +135,30 @@ function calculatePresentation(state) {
 function historyRows(records) {
   return records.map((record) => {
     const timestamp = String(record.createdAt);
+    const metrics = record.metrics || {};
     return {
       id: record.id,
       createdAt: `${timestamp.slice(5, 10)} ${timestamp.slice(11, 16)}`,
       cards: [...record.state.heroCards, ...record.state.boardCards].map(cardLabel).join('  '),
-      summary: `${record.metrics.streetLabel} · ${record.metrics.handLabel} · 权益 ${record.metrics.equityLabel}`,
+      summary: `${metrics.streetLabel || '未知街道'} · ${metrics.handLabel || '未知牌型'} · 权益 ${metrics.equityLabel || '待补充'}`,
     };
   });
 }
 
+const INITIAL_STATE = createHandState();
+const INITIAL_SLOTS = fixedSlots(INITIAL_STATE, 'hero0');
+
 export default {
   data: {
     viewMode: 'hud',
-    state: createHandState(),
+    state: INITIAL_STATE,
     selectedSlot: 'hero0',
     selectedRank: '',
     rankOptions: RANKS.map((rank) => ({ rank, className: 'choice-button' })),
     suitOptions: SUITS.map((suit) => ({ suit, label: SUIT_LABELS[suit] })),
-    slots: fixedSlots(createHandState(), 'hero0'),
-    heroSlots: fixedSlots(createHandState(), 'hero0').slice(0, 2),
-    boardSlots: fixedSlots(createHandState(), 'hero0').slice(2),
+    slots: INITIAL_SLOTS,
+    heroSlots: INITIAL_SLOTS.slice(0, 2),
+    boardSlots: INITIAL_SLOTS.slice(2),
     streetLabel: '翻前',
     handLabel: '翻前未成牌',
     outsLabel: '翻牌后计算',
@@ -177,11 +186,12 @@ export default {
 
   refreshState(state, statusText) {
     const metrics = calculatePresentation(state);
+    const slots = fixedSlots(state, this.data.selectedSlot);
     this.setData({
       state,
-      slots: fixedSlots(state, this.data.selectedSlot),
-      heroSlots: fixedSlots(state, this.data.selectedSlot).slice(0, 2),
-      boardSlots: fixedSlots(state, this.data.selectedSlot).slice(2),
+      slots,
+      heroSlots: slots.slice(0, 2),
+      boardSlots: slots.slice(2),
       streetLabel: metrics.streetLabel,
       handLabel: metrics.handLabel,
       outsLabel: metrics.outsLabel,

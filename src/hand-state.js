@@ -1,4 +1,5 @@
 import { parseCard, validateKnownCards } from './cards.js';
+import { LEGAL_BOARD_COUNTS, RECOGNITION_CONFIDENCE_THRESHOLD } from './constants.js';
 
 export const CARD_SLOTS = Object.freeze([
   'hero0',
@@ -30,6 +31,20 @@ export function getStreet(boardCards) {
   if (count === 4) return 'turn';
   if (count === 5) return 'river';
   return 'invalid';
+}
+
+export function assertCalculableHand(heroCards, boardCards) {
+  if (!Array.isArray(heroCards) || heroCards.length !== 2 || heroCards.some((card) => typeof card !== 'string')) {
+    throw new RangeError('权益计算需要两张有效手牌');
+  }
+  if (!Array.isArray(boardCards) || !LEGAL_BOARD_COUNTS.includes(boardCards.length)) {
+    throw new RangeError('公共牌数量必须为 0、3、4 或 5 张');
+  }
+  if (boardCards.some((card) => typeof card !== 'string')) {
+    throw new RangeError('权益计算需要有效公共牌');
+  }
+  const validation = validateKnownCards([...heroCards, ...boardCards]);
+  if (!validation.valid) throw new RangeError(validation.error);
 }
 
 function resolveSlot(slot) {
@@ -85,7 +100,7 @@ export function validateHandState(state) {
     warnings.push('公共牌数量必须为 0、3、4 或 5 张');
   }
 
-  if (state.recognitionConfidence < 0.85 || state.confirmed === false) {
+  if (state.recognitionConfidence < RECOGNITION_CONFIDENCE_THRESHOLD || state.confirmed === false) {
     warnings.push('识别结果需要人工确认');
   }
 

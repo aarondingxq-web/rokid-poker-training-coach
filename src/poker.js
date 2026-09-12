@@ -1,4 +1,5 @@
 import { parseCard, validateKnownCards } from './cards.js';
+import { HAND_CATEGORY } from './constants.js';
 
 const RANK_VALUES = Object.freeze({
   '2': 2,
@@ -16,17 +17,17 @@ const RANK_VALUES = Object.freeze({
   A: 14,
 });
 
-const CATEGORY_NAMES = Object.freeze([
-  '高牌',
-  '一对',
-  '两对',
-  '三条',
-  '顺子',
-  '同花',
-  '葫芦',
-  '四条',
-  '同花顺',
-]);
+const CATEGORY_NAMES = Object.freeze({
+  [HAND_CATEGORY.HIGH_CARD]: '高牌',
+  [HAND_CATEGORY.ONE_PAIR]: '一对',
+  [HAND_CATEGORY.TWO_PAIR]: '两对',
+  [HAND_CATEGORY.THREE_OF_A_KIND]: '三条',
+  [HAND_CATEGORY.STRAIGHT]: '顺子',
+  [HAND_CATEGORY.FLUSH]: '同花',
+  [HAND_CATEGORY.FULL_HOUSE]: '葫芦',
+  [HAND_CATEGORY.FOUR_OF_A_KIND]: '四条',
+  [HAND_CATEGORY.STRAIGHT_FLUSH]: '同花顺',
+});
 
 function straightHigh(ranks) {
   const unique = [...new Set(ranks)].sort((a, b) => b - a);
@@ -43,7 +44,7 @@ function straightHigh(ranks) {
   return undefined;
 }
 
-function evaluateFive(cards) {
+function evaluateFiveCardHand(cards) {
   const parsed = cards.map(parseCard);
   const ranks = parsed.map((card) => RANK_VALUES[card.rank]);
   const flush = parsed.every((card) => card.suit === parsed[0].suit);
@@ -58,32 +59,32 @@ function evaluateFive(cards) {
   let category;
   let tiebreak;
   if (flush && highStraight !== undefined) {
-    category = 8;
+    category = HAND_CATEGORY.STRAIGHT_FLUSH;
     tiebreak = [highStraight];
   } else if (groups[0][1] === 4) {
-    category = 7;
+    category = HAND_CATEGORY.FOUR_OF_A_KIND;
     tiebreak = [groups[0][0], groups[1][0]];
   } else if (groups[0][1] === 3 && groups[1][1] === 2) {
-    category = 6;
+    category = HAND_CATEGORY.FULL_HOUSE;
     tiebreak = [groups[0][0], groups[1][0]];
   } else if (flush) {
-    category = 5;
+    category = HAND_CATEGORY.FLUSH;
     tiebreak = [...ranks].sort((a, b) => b - a);
   } else if (highStraight !== undefined) {
-    category = 4;
+    category = HAND_CATEGORY.STRAIGHT;
     tiebreak = [highStraight];
   } else if (groups[0][1] === 3) {
-    category = 3;
+    category = HAND_CATEGORY.THREE_OF_A_KIND;
     tiebreak = [groups[0][0], ...groups.slice(1).map(([rank]) => rank).sort((a, b) => b - a)];
   } else if (groups[0][1] === 2 && groups[1][1] === 2) {
     const pairs = [groups[0][0], groups[1][0]].sort((a, b) => b - a);
-    category = 2;
+    category = HAND_CATEGORY.TWO_PAIR;
     tiebreak = [...pairs, groups[2][0]];
   } else if (groups[0][1] === 2) {
-    category = 1;
+    category = HAND_CATEGORY.ONE_PAIR;
     tiebreak = [groups[0][0], ...groups.slice(1).map(([rank]) => rank).sort((a, b) => b - a)];
   } else {
-    category = 0;
+    category = HAND_CATEGORY.HIGH_CARD;
     tiebreak = [...ranks].sort((a, b) => b - a);
   }
 
@@ -126,7 +127,7 @@ export function evaluateBestHand(cards) {
   const validation = validateKnownCards(cards);
   if (!validation.valid) throw new RangeError(validation.error);
 
-  const candidates = combinations(cards, 5).map(evaluateFive);
+  const candidates = combinations(cards, 5).map(evaluateFiveCardHand);
   return candidates.reduce((best, candidate) =>
     compareHands(candidate, best) > 0 ? candidate : best,
   );

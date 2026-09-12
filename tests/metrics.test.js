@@ -13,6 +13,12 @@ test('counts nine flush outs without double counting known cards', () => {
   assert.equal(result.definition, '下一张牌令当前最佳牌型等级提升的未见牌');
 });
 
+test('rejects incomplete or malformed hands before calculating metrics', () => {
+  assert.throws(() => countImmediateOuts(['As', null], ['2c', '3d', '4h']), /有效手牌/);
+  assert.throws(() => estimateHeadsUpEquity(['As', 'Ad'], [null]), /公共牌数量/);
+  assert.throws(() => estimateHeadsUpEquity(['As', 'As'], []), /重复牌/);
+});
+
 test('calculates pot odds only from valid inputs', () => {
   assert.equal(calculatePotOdds(100, 25), 0.2);
   assert.equal(calculatePotOdds(undefined, 25), undefined);

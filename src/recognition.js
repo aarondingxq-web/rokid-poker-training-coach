@@ -1,6 +1,7 @@
 import { parseCard } from './cards.js';
+import { RECOGNITION_CONFIDENCE_THRESHOLD } from './constants.js';
 
-export const RECOGNITION_CONFIDENCE_THRESHOLD = 0.85;
+export { RECOGNITION_CONFIDENCE_THRESHOLD };
 
 export function normalizeCandidate(candidate) {
   parseCard(candidate.card);
